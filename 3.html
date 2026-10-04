@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mohamed Shennawy | Cinematic Video Editor</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Space+Grotesk:wght@300;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #101010;      /* Charcoal black */
+            --text-main: #F2F0EB;     /* Off-white */
+            --accent: #FF5A1F;        /* Cinematic orange */
+            --text-sec: #777777;      /* Grey */
+            
+            --font-en: 'Space Grotesk', sans-serif;
+            --font-ar: 'Cairo', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            cursor: none !important; 
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-en);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .film-grain {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 9998;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            mix-blend-mode: screen;
+        }
+
+        .cursor-dot, .cursor-outline {
+            position: fixed;
+            top: 0; left: 0;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 9999;
+            pointer-events: none;
+            transition: width 0.3s, height 0.3s, background-color 0.3s, border-color 0.3s, opacity 0.3s, box-shadow 0.3s;
+        }
+
+        .cursor-dot {
+            width: 6px; height: 6px;
+            background-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        .cursor-outline {
+            width: 30px; height: 30px;
+            border: 1px solid rgba(242, 240, 235, 0.3);
+        }
+
+        .cursor-hover .cursor-dot {
+            opacity: 0;
+        }
+        
+        .cursor-hover .cursor-outline {
+            width: 60px; height: 60px;
+            border-color: var(--accent);
+            background-color: rgba(255, 90, 31, 0.05);
+            backdrop-filter: blur(2px);
+            box-shadow: 0 0 20px rgba(255, 90, 31, 0.2);
+        }
+
+        @media (pointer: coarse) {
+            * { cursor: auto !important; }
+            .cursor-dot, .cursor-outline { display: none; }
+        }
+
+        header {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            padding: 2rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: linear-gradient(to bottom, rgba(16,16,16,0.9), transparent);
+            backdrop-filter: blur(5px);
+        }
+
+        .logo {
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .header-ui {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
+
+        .rec-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-main);
+            font-family: monospace;
+        }
+
+        .rec-dot {
+            width: 10px; height: 10px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        .header-links a {
+            margin-left: 25px;
+            color: var(--text-sec);
+            text-decoration: none;
+            transition: color 0.3s;
+            text-transform: uppercase;
+        }
+        .header-links a:hover {
+            color: var(--text-main);
+        }
+
+        .hero {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            align-items: center;
+            padding: 100px 5% 0 5%;
+            position: relative;
+            gap: 40px;
+        }
+
+        .hero-content {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        .hero-tagline {
+            font-size: 0.75rem;
+            color: var(--text-sec);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .hero-tagline::before {
+            content: '';
+            width: 40px; height: 1px;
+            background-color: var(--accent);
+            opacity: 0.5;
+        }
+
+        /* The interactive glowing hover effect on your name */
+        .hero-title {
+            font-size: clamp(3rem, 7vw, 6.5rem);
+            font-weight: 900;
+            line-height: 1.05;
+            letter-spacing: -2px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            color: var(--text-main);
+            transition: color 0.5s ease, text-shadow 0.5s ease;
+        }
+
+        .hero-title:hover {
+            color: var(--accent);
+            text-shadow: 0 0 30px rgba(255, 90, 31, 0.6), 0 0 10px rgba(255, 90, 31, 0.4);
+        }
+
+        .hero-slogan {
+            font-size: clamp(1.2rem, 2vw, 1.8rem);
+            font-weight: 300;
+            color: var(--text-sec);
+            margin-bottom: 40px;
+            letter-spacing: 1px;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            padding: 15px 35px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            background: transparent;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--accent);
+            z-index: -1;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .btn-primary:hover {
+            color: #101010;
+            font-weight: 700;
+            box-shadow: 0 10px 20px rgba(255, 90, 31, 0.2);
+        }
+
+        .btn-primary:hover::before {
+            transform: scaleX(1);
+        }
+
+        .software-badges {
+            display: flex;
+            gap: 25px;
+        }
+
+        .badge-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-icon {
+            width: 50px; height: 50px;
+            border: 1px solid #333;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255,255,255,0.02);
+            transition: all 0.4s ease;
+            color: var(--text-sec);
+        }
+
+        .badge-icon svg {
+            width: 24px; height: 24px;
+            fill: currentColor;
+            transition: fill 0.3s, transform 0.3s;
+        }
+
+        .badge-wrapper:hover .badge-icon {
+            color: var(--accent);
+            border-color: var(--accent);
+            background: rgba(255, 90, 31, 0.05);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(255, 90, 31, 0.2);
+        }
+        
+        .badge-label {
+            font-size: 0.65rem;
+            color: var(--text-sec);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.3s ease;
+        }
+        
+        .badge-wrapper:hover .badge-label {
+            color: var(--text-main);
+        }
+
+        .hero-image-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .hero-image {
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 3/4;
+            background-color: #151515;
+            border: 1px solid #333;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.5s ease;
+        }
+        
+        .hero-image::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(16,16,16,1), transparent);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+        }
+
+        .placeholder-text {
+            color: var(--text-sec);
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            z-index: 2;
+        }
+
+        .hero-image:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px rgba(255, 90, 31, 0.15);
+        }
+
+        .section-layout {
+            padding: 120px 5%;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 60px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 0.85rem;
+            color: var(--text-sec);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .section-count {
+            font-family: monospace;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 40px;
+        }
+
+        .project-card {
+            position: relative;
+            display: block;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .project-thumb {
+            aspect-ratio: 16/9;
+            background-color: #151515;
+            border: 1px solid #222;
+            margin-bottom: 20px;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .project-card:hover .project-thumb {
+            border-color: var(--accent);
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+        }
+
+        .p-play {
+            width: 60px; height: 60px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.4s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        .p-play::after {
+            content: '';
+            width: 0; height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 12px solid var(--accent);
+            margin-left: 4px;
+        }
+
+        .project-card:hover .p-play { 
+            opacity: 1; 
+            transform: scale(1);
+            border-color: var(--accent);
+        }
+
+        .project-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .project-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .project-category {
+            font-size: 0.75rem;
+            color: var(--text-sec);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .project-duration {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--accent);
+        }
+
+        .about-text {
+            font-size: clamp(1.1rem, 2vw, 1.8rem);
+            line-height: 1.6;
+            color: var(--text-main);
+            max-width: 1000px;
+            font-weight: 300;
+        }
+        
+        .about-text span {
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 50px;
+            padding-bottom: 150px;
+        }
+
+        .contact-item {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .contact-label {
+            font-size: 0.75rem;
+            color: var(--text-sec);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .contact-link {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            text-decoration: none;
+            position: relative;
+            display: inline-block;
+            width: fit-content;
+            transition: color 0.3s;
+            margin-bottom: 5px;
+        }
+
+        .contact-link::after {
+            content: '';
+            position: absolute;
+            bottom: -3px; left: 0;
+            width: 100%; height: 1px;
+            background-color: var(--accent);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.4s ease;
+        }
+
+        .contact-link:hover {
+            color: var(--accent);
+        }
+
+        .contact-link:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+
+        .timeline-bar {
+            position: fixed;
+            bottom: 0; left: 0;
+            width: 100%; height: 50px;
+            background-color: rgba(16, 16, 16, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #222;
+            z-index: 100;
+            display: flex;
+            align-items: flex-end;
+            background-image: linear-gradient(90deg, #333 1px, transparent 1px);
+            background-size: 2vw 10px;
+            background-repeat: repeat-x;
+            background-position: bottom;
+        }
+
+        .playhead {
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 2px; height: 100%;
+            background-color: var(--accent);
+            transform: translateX(0);
+            will-change: transform;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        .playhead::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -6px;
+            width: 0; height: 0;
+            border-left: 7px solid transparent;
+            border-right: 7px solid transparent;
+            border-top: 10px solid var(--accent);
+        }
+        
+        .timecode-display {
+            position: fixed;
+            bottom: 65px; left: 2%;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--accent);
+            letter-spacing: 2px;
+            z-index: 99;
+            background: rgba(16, 16, 16, 0.8);
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #222;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        @media (max-width: 900px) {
+            .hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding-top: 150px;
+            }
+            .hero-content {
+                align-items: center;
+                text-align: center;
+            }
+            .hero-actions {
+                justify-content: center;
+            }
+            .hero-image-wrapper {
+                justify-content: center;
+                margin-top: 30px;
+            }
+            .header-ui .header-links { display: none; }
+            .hero-title { font-size: clamp(2.5rem, 10vw, 4rem); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="film-grain"></div>
+    <div class="cursor-dot" id="cursor-dot"></div>
+    <div class="cursor-outline" id="cursor-outline"></div>
+
+    <header>
+        <div class="logo interactable">MOHAMED SHENNAWY</div>
+        <div class="header-ui">
+            <div class="rec-indicator">
+                <div class="rec-dot"></div>
+                REC
+            </div>
+            <div class="header-links">
+                <a href="#works" class="interactable">WORKS</a>
+                <a href="#about" class="interactable">ABOUT</a>
+                <a href="#contact" class="interactable">CONTACT</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero reveal active">
+        <div class="hero-content">
+            <div class="hero-tagline">Beyond the Cut. A creative mind behind every frame.</div>
+            
+            <h1 class="hero-title interactable">MOHAMED<br>SHENNAWY</h1>
+            <div class="hero-slogan">Edit brings life for your ideas.</div>
+            
+            <div class="hero-actions">
+                <a href="#contact" class="btn-primary interactable">Start a project together</a>
+                
+                <div class="software-badges">
+                    <div class="badge-wrapper interactable">
+                        <div class="badge-icon" title="Adobe After Effects">
+                            <svg viewBox="0 0 100 100">
+                                <text x="50" y="65" font-family="Space Grotesk" font-size="45" font-weight="bold" text-anchor="middle" fill="currentColor">Ae</text>
+                            </svg>
+                        </div>
+                        <span class="badge-label">After Effects</span>
+                    </div>
+                    
+                    <div class="badge-wrapper interactable">
+                        <div class="badge-icon" title="DaVinci Resolve">
+                            <svg viewBox="0 0 100 100">
+                                <path d="M50 15 L80 35 L80 65 L50 85 L20 65 L20 35 Z" fill="none" stroke="currentColor" stroke-width="6"/>
+                                <circle cx="50" cy="50" r="12" fill="currentColor"/>
+                            </svg>
+                        </div>
+                        <span class="badge-label">DaVinci Resolve</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-image-wrapper">
+            <div class="hero-image interactable">
+                <!-- Frame Placeholder -->
+                <div class="placeholder-text">[ IMAGE FRAME ]</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="works" class="section-layout">
+        <div class="section-header reveal">
+            <div class="section-title">Selected Works</div>
+            <div class="section-count">[ 01 ]</div>
+        </div>
+
+        <div class="grid">
+            <a href="#" class="project-card reveal interactable">
+                <div class="project-thumb">
+                    <div class="p-play"></div>
+                </div>
+                <div class="project-meta">
+                    <div>
+                        <h3 class="project-title">Craft Agency Showreel</h3>
+                        <p class="project-category">Advertising & Promo Reel</p>
+                    </div>
+                    <div class="project-duration">01:14:00</div>
+                </div>
+            </a>
+
+            <a href="#" class="project-card reveal interactable">
+                <div class="project-thumb">
+                    <div class="p-play"></div>
+                </div>
+                <div class="project-meta">
+                    <div>
+                        <h3 class="project-title">Motion Graphics Project</h3>
+                        <p class="project-category">VFX & Text Animation</p>
+                    </div>
+                    <div class="project-duration">00:45:12</div>
+                </div>
+            </a>
+
+            <a href="#" class="project-card reveal interactable">
+                <div class="project-thumb">
+                    <div class="p-play"></div>
+                </div>
+                <div class="project-meta">
+                    <div>
+                        <h3 class="project-title">Commercial Edit</h3>
+                        <p class="project-category">Color Grading & Sound</p>
+                    </div>
+                    <div class="project-duration">02:10:24</div>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <section id="about" class="section-layout">
+        <div class="section-header reveal">
+            <div class="section-title">About Me</div>
+            <div class="section-count">[ 02 ]</div>
+        </div>
+        
+        <div class="about-content reveal interactable">
+            <p class="about-text">
+                Mainly , Iam an electrical engineer graduated from Arab Academy for science, Technology and Maritime Transport (AAST) with bachelors degree Excellent with honors, experienced as design and implementation engineer for Sewage Treatment planets and water desalination planets. Right now , iam a third protection engineer at Egyptian Electric Transmission company ( EETC ).I did all my best to be a professional Video Editor and Motion Designer based in Egypt. I specialize in turning raw footage into compelling stories. With a deep understanding of pacing, color theory, and sound design, I ensure that <span>every frame earns the next.</span> Whether it's a dynamic commercial, a documentary, or visual effects, I craft visuals that leave a lasting impact. so here we go....
+            </p>
+        </div>
+    </section>
+
+    <section id="contact" class="section-layout">
+        <div class="section-header reveal">
+            <div class="section-title">Contact & Socials</div>
+            <div class="section-count">[ 03 ]</div>
+        </div>
+
+        <div class="contact-grid reveal">
+            <div class="contact-item">
+                <span class="contact-label">Email</span>
+                <a href="mailto:mohamed.e.elshenawy@gmail.com" class="contact-link interactable">mohamed.e.elshenawy@gmail.com</a>
+                <a href="mailto:mshenawy7797@gmail.com" class="contact-link interactable">mshenawy7797@gmail.com</a>
+            </div>
+            
+            <div class="contact-item">
+                <span class="contact-label">Phone / WhatsApp</span>
+                <a href="tel:+201225920476" class="contact-link interactable">+20 122 592 0476</a>
+                <a href="tel:+201556019971" class="contact-link interactable">+20 155 601 9971</a>
+            </div>
+
+            <div class="contact-item">
+                <span class="contact-label">Social Media</span>
+                <a href="#" class="contact-link interactable">Instagram</a>
+                <a href="#" class="contact-link interactable">Behance</a>
+                <a href="#" class="contact-link interactable">LinkedIn</a>
+            </div>
+        </div>
+    </section>
+
+    <div class="timecode-display" id="global-timecode">TC: 00:00:00:00</div>
+    <div class="timeline-bar">
+        <div class="playhead" id="playhead"></div>
+    </div>
+
+    <script>
+        // Custom Cursor Logic
+        const cursorDot = document.getElementById("cursor-dot");
+        const cursorOutline = document.getElementById("cursor-outline");
+        const interactables = document.querySelectorAll(".interactable");
+
+        window.addEventListener("mousemove", (e) => {
+            const posX = e.clientX;
+            const posY = e.clientY;
+
+            // Direct follow for dot
+            cursorDot.style.left = `${posX}px`;
+            cursorDot.style.top = `${posY}px`;
+
+            // Smooth follow for outline
+            cursorOutline.animate({
+                left: `${posX}px`,
+                top: `${posY}px`
+            }, { duration: 300, fill: "forwards" });
+        });
+
+        interactables.forEach(item => {
+            item.addEventListener("mouseenter", () => document.body.classList.add("cursor-hover"));
+            item.addEventListener("mouseleave", () => document.body.classList.remove("cursor-hover"));
+        });
+
+        // Scroll Reveal Animations
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                var elementVisible = 100;
+                
+                if (elementTop < windowHeight - elementVisible) {
+                    reveals[i].classList.add("active");
+                }
+            }
+        }
+        window.addEventListener("scroll", reveal);
+        reveal(); 
+
+        // Editor Timeline Scroll Indicator & Fake Timecode
+        const playhead = document.getElementById("playhead");
+        const globalTimecode = document.getElementById("global-timecode");
+        const pad = (num) => num.toString().padStart(2, '0');
+
+        window.addEventListener("scroll", () => {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            let scrollPercent = 0;
+            
+            if (docHeight > 0) {
+                scrollPercent = scrollTop / docHeight;
+            }
+            
+            // Move playhead across the X axis
+            const viewportWidth = window.innerWidth;
+            const moveAmount = scrollPercent * viewportWidth;
+            playhead.style.transform = `translateX(${moveAmount}px)`;
+
+            // Fake timecode generation based on scroll progress
+            const totalFrames = scrollPercent * (1 * 3600 * 24 + 24 * 60 * 24 + 10 * 24); 
+            const hours = Math.floor(totalFrames / (3600 * 24));
+            const minutes = Math.floor((totalFrames % (3600 * 24)) / (60 * 24));
+            const seconds = Math.floor((totalFrames % (60 * 24)) / 24);
+            const frames = Math.floor(totalFrames % 24);
+
+            globalTimecode.innerText = `TC: ${pad(hours)}:${pad(minutes)}:${pad(seconds)}:${pad(frames)}`;
+        });
+    </script>
+</body>
+</html>
